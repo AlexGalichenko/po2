@@ -42,7 +42,7 @@ class PO {
      */
     async getEl(element, po, token) {
         const currentElement = await element;
-        const newPo = po[token.elementName.replace(/\s/, '')];
+        const newPo = po[token.elementName.replace(/\s/g, '')];
         if (!newPo) throw new Error(`${token.elementName} is not found`);
         if (currentElement.length > 0 && newPo.isCollection) throw new Error('Unsupported operation. Getting collection from collection')
         if (!newPo.isCollection && token.suffix) throw new Error(`Unsupported operation. ${token.elementName} is not collection`);
