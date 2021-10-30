@@ -88,6 +88,8 @@ class PO {
      */
     async getElementByIndex(element, po, token) {
         const collection = await this.getCollection(element, po.selector);
+        const el = collection[parseInt(token.value) - 1];
+        if (!el) return [await this.getChildNotFound(element), po]
         return [collection[parseInt(token.value) - 1], po]
     }
 
@@ -102,7 +104,6 @@ class PO {
 
     async getSingleElement(element, selector) {
         const newElement = await element.$(selector);
-        if (newElement.waitForExist) await newElement.waitForExist({ timeout: this.config.timeout });
         return newElement;
     }
 
@@ -120,7 +121,7 @@ class PO {
     }
 
     async getChildNotFound(parentElement) {
-        return parentElement.$('childnotfound' + parentElement.sessionId)
+        return parentElement.$('ElementNotExist-' + parentElement.sessionId)
     }
 
 }
