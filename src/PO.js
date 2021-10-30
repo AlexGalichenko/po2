@@ -2,11 +2,13 @@ const parseTokens = require('./parseTokens');
 
 class PO {
 
-    init(driver) {
+    init(driver, options = { timeout: 2000 }) {
         /**
          * @type { import('webdriverio').BrowserBase }
          */
         this.driver = driver;
+        this.config = {};
+        this.config.timeout = options.timeout;
     }
 
     /**
@@ -35,10 +37,10 @@ class PO {
 
     /**
      * @private
-     * @param {*} element 
-     * @param {*} po 
-     * @param {*} token 
-     * @returns 
+     * @param {*} element
+     * @param {*} po
+     * @param {*} token
+     * @returns
      */
     async getEl(element, po, token) {
         const currentElement = await element;
@@ -49,19 +51,19 @@ class PO {
         if (newPo.isCollection && token.suffix === 'in') return this.getElementByText(currentElement, newPo, token)
         if (newPo.isCollection && token.suffix === 'of') return this.getElementByIndex(currentElement, newPo, token)
         if (currentElement.length > 0 && !newPo.isCollection) return this.getChildsOfCollectionElements(currentElement, newPo)
-        if (newPo.isCollection && !token.suffix) return [currentElement.$$(newPo.selector), newPo]
-        return [currentElement.$(newPo.selector), newPo]
+        if (newPo.isCollection && !token.suffix) return [await this.getCollection(currentElement, newPo.selector), newPo]
+        return [await this.getSingleElement(currentElement, newPo.selector), newPo]
     }
 
     /**
      * @private
-     * @param {*} element 
-     * @param {*} po 
-     * @param {*} token 
-     * @returns 
+     * @param {*} element
+     * @param {*} po
+     * @param {*} token
+     * @returns
      */
     async getElementByText(element, po, token) {
-        const collection = await element.$$(po.selector);
+        const collection = await this.getCollection(element, po.selector);
         let condition;
         if (token.prefix === '#') {
             condition = (text) => text.includes(token.value);
@@ -69,35 +71,56 @@ class PO {
         if (token.prefix === '@') {
             condition = (text) => text === token.value;
         }
-        for (const element of collection) {
-            const text = await element.getText();
-            if (condition(text)) return [element, po]
+        for (const el of collection) {
+            let text = await el.getText();
+            if (text === undefined) text = await this.driver.execute(e => e.textContent, el)
+            if (condition(text)) return [el, po]
         }
+        return [await this.getChildNotFound(element), po]
     }
 
     /**
      * @private
-     * @param {*} element 
-     * @param {*} po 
-     * @param {*} token 
-     * @returns 
+     * @param {*} element
+     * @param {*} po
+     * @param {*} token
+     * @returns
      */
     async getElementByIndex(element, po, token) {
-        const collection = await element.$$(po.selector);
+        const collection = await this.getCollection(element, po.selector);
         return [collection[parseInt(token.value) - 1], po]
     }
 
+    async getCollection(element, selector) {
+        try {
+            await this.driver.waitUntil(async () => (await element.$$(selector)).length > 0, { timeout: this.config.timeout });
+            return element.$$(selector);
+        } catch (err) {
+            return []
+        }
+    }
+
+    async getSingleElement(element, selector) {
+        const newElement = await element.$(selector);
+        if (newElement.waitForExist) await newElement.waitForExist({ timeout: this.config.timeout });
+        return newElement;
+    }
+
     /**
      * @private
-     * @param {*} collection 
-     * @param {*} po 
-     * @returns 
+     * @param {*} collection
+     * @param {*} po
+     * @returns
      */
     async getChildsOfCollectionElements(collection, po) {
         return [
             collection.map(async element => element.$(po.selector)),
             po
         ]
+    }
+
+    async getChildNotFound(parentElement) {
+        return parentElement.$('childnotfound' + parentElement.sessionId)
     }
 
 }
