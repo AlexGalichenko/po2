@@ -63,7 +63,6 @@ class PO {
      * @returns
      */
     async getElementByText(element, po, token) {
-        const collection = await this.getCollection(element, po.selector);
         let condition;
         if (token.prefix === '#') {
             condition = (text) => text.includes(token.value);
@@ -71,12 +70,28 @@ class PO {
         if (token.prefix === '@') {
             condition = (text) => text === token.value;
         }
+        await this.waitForTextInCollection(element, po.selector, condition);
+        const collection = await this.getCollection(element, po.selector);
         for (const el of collection) {
             let text = await el.getText();
             if (text === undefined) text = await this.driver.execute(e => e.textContent, el)
             if (condition(text)) return [el, po]
         }
         return [await this.getChildNotFound(element), po]
+    }
+
+    async waitForTextInCollection(element, selector, condition) {
+        await this.driver.waitUntil(
+            async () => {
+                const collection = await element.$$(selector);
+                for (const el of collection) {
+                    let text = await el.getText();
+                    if (text === undefined) text = await this.driver.execute(e => e.textContent, el)
+                    if (condition(text)) return true
+                }
+            },
+            { timeout: this.config.timeout }
+        )
     }
 
     /**
@@ -87,19 +102,20 @@ class PO {
      * @returns
      */
     async getElementByIndex(element, po, token) {
+        await this.waitForIndexInCollection(element, po.selector, token.value);
         const collection = await this.getCollection(element, po.selector);
-        const el = collection[parseInt(token.value) - 1];
-        if (!el) return [await this.getChildNotFound(element), po]
         return [collection[parseInt(token.value) - 1], po]
     }
 
+    async waitForIndexInCollection(element, selector, index) {
+        await this.driver.waitUntil(
+            async () => (await element.$$(selector)) >= index,
+            { timeout: this.config.timeout }
+        )
+    }
+
     async getCollection(element, selector) {
-        try {
-            await this.driver.waitUntil(async () => (await element.$$(selector)).length > 0, { timeout: this.config.timeout });
-            return element.$$(selector);
-        } catch (err) {
-            return []
-        }
+        return element.$$(selector);
     }
 
     async getSingleElement(element, selector) {
