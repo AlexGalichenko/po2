@@ -1,9 +1,11 @@
-##@cucumber-e2e/po2
+## @cucumber-e2e/po2
+
 This library provides the ability to create hierarchical page objects and access elements using plain-english selectors.
 Works on top of webdriverIO.
 
 `npm install @cucumber-e2e/po2`
-##Usage
+## Usage
+
 Lib provides getElement method that resolves plain-english selector and return webdriverIO element or array of webdriverIO element.
 ```javascript
 const { po } = require('@cucumber-e2e/po2');
@@ -21,7 +23,8 @@ When click '#1 of Multiple Component > Child Item'
 
 Lib provides capability to get single element from collection by index (#index of Collection) or inner text (#text in Collection).
 
-##Create page object
+## Create page object
+
 Lib provides two methods $ and $$ that allow registering elements and collections.
 An element can be defined in form of webdriverIO selector or as an instance of the component class. 
 
