@@ -131,7 +131,7 @@ class PO {
      */
     async getChildsOfCollectionElements(collection, po) {
         return [
-            collection.map(async element => element.$(po.selector)),
+            await Promise.all(collection.map(async element => element.$(po.selector))),
             po
         ]
     }
