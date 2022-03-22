@@ -27,7 +27,7 @@ test('get single element', async () => {
 
 test('get collection', async () => {
     const collection = await po.getElement('List');
-    expect(collection.length).toBe(5);
+    expect(collection.length).toBe(6);
 });
 
 test('get element from collection by index', async () => {
@@ -68,8 +68,13 @@ test('get element from multiple component item by exact text', async () => {
 test('get child item of each element of collection', async () => {
     const collection = await po.getElement('Multiple Components > Child Item');
     expect(collection.length).toBe(3);
+    expect(await collection[0].getText()).toBe('first inner');
 });
 
+test('get element from collection by parial text containing in', async () => {
+    const element = await po.getElement('#Contain in in List');
+    expect(await element.getText()).toBe('Contain in word');
+});
 
 afterAll(async () => {
     await po.driver.deleteSession();

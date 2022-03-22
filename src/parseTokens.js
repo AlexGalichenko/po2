@@ -1,5 +1,5 @@
 const SPLIT_TOKENS_REGEXP = /\s*>\s*/;
-const PARSE_TOKEN_REGEXP = /^(?<prefix>[#@])(?<value>.+?)\s(?<suffix>of|in)\s(?<elementName>.+)$/
+const PARSE_TOKEN_REGEXP = /^(?<prefix>[#@])(?<value>.+)\s(?<suffix>of|in)\s(?<elementName>.+)$/
 
 function parseTokens(path) {
     const tokens = path.split(SPLIT_TOKENS_REGEXP);
