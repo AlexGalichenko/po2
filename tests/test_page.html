@@ -27,5 +27,15 @@
         <li class="l-component"><div>second inner</div></li>
         <li class="l-component"><div>third inner</div></li>
     </ul>
+    <ul id="async-list-components">
+    </ul>
+    <script>
+        const container = document.querySelector('#async-list-components');
+        for (let i = 1; i <= 3; i++) {
+            const element = document.createElement('li');
+            element.innerText = `async ${i}`;
+            setTimeout(() => container.appendChild(element), i * 1000);
+        }
+    </script>
 </body>
 </html>

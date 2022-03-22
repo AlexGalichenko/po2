@@ -50,7 +50,7 @@ class PO {
         if (!newPo.isCollection && token.suffix) throw new Error(`Unsupported operation. ${token.elementName} is not collection`);
         if (newPo.isCollection && token.suffix === 'in') return this.getElementByText(currentElement, newPo, token)
         if (newPo.isCollection && token.suffix === 'of') return this.getElementByIndex(currentElement, newPo, token)
-        if (currentElement.length > 0 && !newPo.isCollection) return this.getChildsOfCollectionElements(currentElement, newPo)
+        if (currentElement.length > 0 && !newPo.isCollection) return this.getChildrenOfCollectionElements(currentElement, newPo)
         if (newPo.isCollection && !token.suffix) return [await this.getCollection(currentElement, newPo.selector), newPo]
         return [await this.getSingleElement(currentElement, newPo.selector), newPo]
     }
@@ -102,14 +102,15 @@ class PO {
      * @returns
      */
     async getElementByIndex(element, po, token) {
-        await this.waitForIndexInCollection(element, po.selector, token.value);
+        const tokenValue = parseInt(token.value);
+        await this.waitForIndexInCollection(element, po.selector, tokenValue);
         const collection = await this.getCollection(element, po.selector);
-        return [collection[parseInt(token.value) - 1], po]
+        return [collection[tokenValue - 1], po]
     }
 
     async waitForIndexInCollection(element, selector, index) {
         await this.driver.waitUntil(
-            async () => (await element.$$(selector)) >= index,
+            async () => (await element.$$(selector)).length >= index,
             { timeout: this.config.timeout }
         )
     }
@@ -119,8 +120,7 @@ class PO {
     }
 
     async getSingleElement(element, selector) {
-        const newElement = await element.$(selector);
-        return newElement;
+        return element.$(selector);
     }
 
     /**
@@ -129,7 +129,7 @@ class PO {
      * @param {*} po
      * @returns
      */
-    async getChildsOfCollectionElements(collection, po) {
+    async getChildrenOfCollectionElements(collection, po) {
         return [
             await Promise.all(collection.map(async element => element.$(po.selector))),
             po
