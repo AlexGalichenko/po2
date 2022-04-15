@@ -76,6 +76,18 @@ test('get element from collection by parial text containing in', async () => {
     expect(await element.getText()).toBe('Contain in word');
 });
 
+test('get element that not exist in collection by text', async () => {
+    const element = await po.getElement('#notexist in List');
+    expect(await element.isExisting()).toBe(false);
+    expect(await element.isDisplayed()).toBe(false);
+});
+
+test('get element that not exist in collection by index', async () => {
+    const element = await po.getElement('#42 of List');
+    expect(await element.isExisting()).toBe(false);
+    expect(await element.isDisplayed()).toBe(false);
+});
+
 test('get element from async collection', async () => {
     const element = await po.getElement('Async Component > #2 of Child Items');
     expect(await element.getText()).toBe('async 2');
