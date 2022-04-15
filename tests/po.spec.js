@@ -14,7 +14,7 @@ beforeAll(async () => {
         }
     });
 
-    po.init(driver);
+    po.init(driver, { timeout: 5000 });
     po.register(samplePO);
     const fileName = path.resolve('./tests/test_page.html');
     await driver.url('file://' + fileName);
@@ -86,6 +86,11 @@ test('get element that not exist in collection by index', async () => {
     const element = await po.getElement('#42 of List');
     expect(await element.isExisting()).toBe(false);
     expect(await element.isDisplayed()).toBe(false);
+});
+
+test('get element from async collection', async () => {
+    const element = await po.getElement('Async Component > #2 of Child Items');
+    expect(await element.getText()).toBe('async 2');
 });
 
 afterAll(async () => {
