@@ -14,7 +14,7 @@ beforeAll(async () => {
         }
     });
 
-    po.init(driver);
+    po.init(driver, { timeout: 5000 });
     po.register(samplePO);
     const fileName = path.resolve('./tests/test_page.html');
     await driver.url('file://' + fileName);
@@ -74,6 +74,11 @@ test('get child item of each element of collection', async () => {
 test('get element from collection by parial text containing in', async () => {
     const element = await po.getElement('#Contain in in List');
     expect(await element.getText()).toBe('Contain in word');
+});
+
+test('get element from async collection', async () => {
+    const element = await po.getElement('Async Component > #2 of Child Items');
+    expect(await element.getText()).toBe('async 2');
 });
 
 afterAll(async () => {
