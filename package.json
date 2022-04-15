@@ -1,13 +1,13 @@
 {
   "name": "@cucumber-e2e/po2",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "library for plain-english access page object access",
   "main": "index.js",
   "scripts": {
     "test": "jest"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Alexander Galichenko",
+  "license": "MIT",
   "devDependencies": {
     "chai": "^4.3.4",
     "jest": "^27.3.1",

@@ -1,4 +1,5 @@
 const parseTokens = require('./parseTokens');
+const TICK_INTERVAL = 500;
 
 class PO {
 
@@ -50,7 +51,7 @@ class PO {
         if (!newPo.isCollection && token.suffix) throw new Error(`Unsupported operation. ${token.elementName} is not collection`);
         if (newPo.isCollection && token.suffix === 'in') return this.getElementByText(currentElement, newPo, token)
         if (newPo.isCollection && token.suffix === 'of') return this.getElementByIndex(currentElement, newPo, token)
-        if (currentElement.length > 0 && !newPo.isCollection) return this.getChildsOfCollectionElements(currentElement, newPo)
+        if (currentElement.length > 0 && !newPo.isCollection) return this.getChildrenOfCollectionElements(currentElement, newPo)
         if (newPo.isCollection && !token.suffix) return [await this.getCollection(currentElement, newPo.selector), newPo]
         return [await this.getSingleElement(currentElement, newPo.selector), newPo]
     }
@@ -70,28 +71,25 @@ class PO {
         if (token.prefix === '@') {
             condition = (text) => text === token.value;
         }
-        await this.waitForTextInCollection(element, po.selector, condition);
-        const collection = await this.getCollection(element, po.selector);
-        for (const el of collection) {
-            let text = await el.getText();
-            if (text === undefined) text = await this.driver.execute(e => e.textContent, el)
-            if (condition(text)) return [el, po]
-        }
-        return [await this.getChildNotFound(element), po]
-    }
-
-    async waitForTextInCollection(element, selector, condition) {
-        await this.driver.waitUntil(
-            async () => {
-                const collection = await element.$$(selector);
+        return new Promise(resolve => {
+            let timer = 0;
+            const waitInterval = setInterval(async () => {
+                timer += TICK_INTERVAL;
+                if (timer > this.config.timeout) {
+                    clearInterval(waitInterval);
+                    return resolve([this.getChildNotFound(element), po]);
+                }
+                const collection = await this.getCollection(element, po.selector);
                 for (const el of collection) {
                     let text = await el.getText();
-                    if (text === undefined) text = await this.driver.execute(e => e.textContent, el)
-                    if (condition(text)) return true
+                    if (text === undefined) text = await this.driver.execute(e => e.textContent, el);
+                    if (condition(text)) {
+                        clearInterval(waitInterval);
+                        return resolve([el, po]);
+                    }
                 }
-            },
-            { timeout: this.config.timeout }
-        )
+            }, TICK_INTERVAL);
+        });
     }
 
     /**
@@ -102,16 +100,22 @@ class PO {
      * @returns
      */
     async getElementByIndex(element, po, token) {
-        await this.waitForIndexInCollection(element, po.selector, token.value);
-        const collection = await this.getCollection(element, po.selector);
-        return [collection[parseInt(token.value) - 1], po]
-    }
-
-    async waitForIndexInCollection(element, selector, index) {
-        await this.driver.waitUntil(
-            async () => (await element.$$(selector)) >= index,
-            { timeout: this.config.timeout }
-        )
+        const index = parseInt(token.value) - 1;
+        return new Promise((resolve) => {
+            let timer = 0;
+            const waitInterval = setInterval(async () => {
+                timer += TICK_INTERVAL;
+                if (timer > this.config.timeout) {
+                    clearInterval(waitInterval);
+                    return resolve([this.getChildNotFound(element), po]);
+                }
+                const collection = await this.getCollection(element, po.selector);
+                if (collection.length > index) {
+                    clearInterval(waitInterval);
+                    return resolve([collection[index], po]);
+                }
+            }, TICK_INTERVAL);
+        });
     }
 
     async getCollection(element, selector) {
@@ -119,8 +123,7 @@ class PO {
     }
 
     async getSingleElement(element, selector) {
-        const newElement = await element.$(selector);
-        return newElement;
+        return element.$(selector);
     }
 
     /**
@@ -129,7 +132,7 @@ class PO {
      * @param {*} po
      * @returns
      */
-    async getChildsOfCollectionElements(collection, po) {
+    async getChildrenOfCollectionElements(collection, po) {
         return [
             await Promise.all(collection.map(async element => element.$(po.selector))),
             po
