@@ -93,6 +93,24 @@ test('get element from async collection', async () => {
     expect(await element.getText()).toBe('async 2');
 });
 
+test('get collection from collection', async () => {
+    const elements = await po.getElement('Level 1 Elements > Level 2 Elements > List Items');
+    const text7 = await elements[6].getText();
+    expect(text7).toBe('x31');
+    expect(elements.length).toBe(9);
+});
+
+test('get collection element from collection', async () => {
+    const elements = await po.getElement('Level 1 Elements > Level 2 Elements > #2 of List Items');
+    const text12 = await elements[0].getText();
+    const text22 = await elements[1].getText();
+    const text32 = await elements[2].getText();
+    expect(text12).toBe('x12');
+    expect(text22).toBe('x22');
+    expect(text32).toBe('x32');
+    expect(elements.length).toBe(3);
+});
+
 afterAll(async () => {
     await po.driver.deleteSession();
 })

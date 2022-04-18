@@ -47,13 +47,40 @@ class PO {
         const currentElement = await element;
         const newPo = po[token.elementName.replace(/\s/g, '')];
         if (!newPo) throw new Error(`${token.elementName} is not found`);
-        if (currentElement.length > 0 && newPo.isCollection) throw new Error('Unsupported operation. Getting collection from collection')
         if (!newPo.isCollection && token.suffix) throw new Error(`Unsupported operation. ${token.elementName} is not collection`);
-        if (newPo.isCollection && token.suffix === 'in') return this.getElementByText(currentElement, newPo, token)
-        if (newPo.isCollection && token.suffix === 'of') return this.getElementByIndex(currentElement, newPo, token)
-        if (currentElement.length > 0 && !newPo.isCollection) return this.getChildrenOfCollectionElements(currentElement, newPo)
-        if (newPo.isCollection && !token.suffix) return [await this.getCollection(currentElement, newPo.selector), newPo]
-        return [await this.getSingleElement(currentElement, newPo.selector), newPo]
+
+        if (Array.isArray(currentElement)) {
+            if (!newPo.isCollection) return [
+                await this.getChildrenOfCollectionElements(currentElement, newPo),
+                newPo
+            ];
+            if (newPo.isCollection && !token.suffix) return [
+                await this.getCollectionOfCollection(currentElement, newPo),
+                newPo
+            ];
+            if (newPo.isCollection && token.suffix === 'in') return [
+                await this.getElementByTextFromCollection(currentElement, newPo, token),
+                newPo
+            ];
+            if (newPo.isCollection && token.suffix === 'of') return [
+                await this.getElementByIndexFromCollection(currentElement, newPo, token),
+                newPo
+            ];
+        } else {
+            if (newPo.isCollection && token.suffix === 'in') return [
+                await this.getElementByText(currentElement, newPo, token),
+                newPo
+            ];
+            if (newPo.isCollection && token.suffix === 'of') return [
+                await this.getElementByIndex(currentElement, newPo, token),
+                newPo
+            ];
+            if (newPo.isCollection && !token.suffix) return [
+                await this.getCollection(currentElement, newPo.selector),
+                newPo
+            ];
+            return [await this.getSingleElement(currentElement, newPo.selector), newPo]
+        }
     }
 
     /**
@@ -77,7 +104,7 @@ class PO {
                 timer += TICK_INTERVAL;
                 if (timer > this.config.timeout) {
                     clearInterval(waitInterval);
-                    return resolve([this.getChildNotFound(element), po]);
+                    return resolve(this.getChildNotFound(element, token));
                 }
                 const collection = await this.getCollection(element, po.selector);
                 for (const el of collection) {
@@ -85,11 +112,26 @@ class PO {
                     if (text === undefined) text = await this.driver.execute(e => e.textContent, el);
                     if (condition(text)) {
                         clearInterval(waitInterval);
-                        return resolve([el, po]);
+                        return resolve(el);
                     }
                 }
             }, TICK_INTERVAL);
         });
+    }
+
+    /**
+     * Get element by text for each element in collection
+     * @param collection
+     * @param po
+     * @param token
+     * @returns {Promise<Awaited<unknown>[]>}
+     */
+    getElementByTextFromCollection(collection, po, token) {
+        return Promise.all(collection.map(element => this.getElementByText(element, po, token)))
+    }
+
+    getElementByIndexFromCollection(collection, po, token) {
+        return Promise.all(collection.map(element => this.getElementByIndex(element, po, token)))
     }
 
     /**
@@ -107,12 +149,12 @@ class PO {
                 timer += TICK_INTERVAL;
                 if (timer > this.config.timeout) {
                     clearInterval(waitInterval);
-                    return resolve([this.getChildNotFound(element), po]);
+                    return resolve(this.getChildNotFound(element, token));
                 }
                 const collection = await this.getCollection(element, po.selector);
                 if (collection.length > index) {
                     clearInterval(waitInterval);
-                    return resolve([collection[index], po]);
+                    return resolve(collection[index]);
                 }
             }, TICK_INTERVAL);
         });
@@ -133,14 +175,16 @@ class PO {
      * @returns
      */
     async getChildrenOfCollectionElements(collection, po) {
-        return [
-            await Promise.all(collection.map(async element => element.$(po.selector))),
-            po
-        ]
+        return Promise.all(collection.map(async element => element.$(po.selector)))
     }
 
-    async getChildNotFound(parentElement) {
-        return parentElement.$('ElementNotExist-' + parentElement.sessionId)
+    async getCollectionOfCollection(collection, po) {
+        const subCollection = await Promise.all(collection.map(async element => element.$$(po.selector)));
+        return await Promise.all(subCollection.reduce((flat, elements) => [...flat, ...elements], []));
+    }
+
+    async getChildNotFound(parentElement, {value, suffix, elementName}) {
+        return parentElement.$(`ElementNotExist-${value}-${suffix}-${elementName}`.replace(/\s/g, ''))
     }
 
 }

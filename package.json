@@ -1,6 +1,6 @@
 {
   "name": "@cucumber-e2e/po2",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "library for plain-english access page object access",
   "main": "index.js",
   "scripts": {
