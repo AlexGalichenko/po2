@@ -18,12 +18,25 @@ class AsyncComponent {
     ChildItems = $$('li');
 }
 
+class Level2Elements {
+    selector = 'ul.level2';
+
+    ListItems = $$('li > span');
+}
+
+class Level1Elements {
+    selector = 'ul.level1';
+
+    Level2Elements = $$(new Level2Elements());
+}
+
 class App {
     SingleElement = $('.single-element');
     List = $$('.list li');
     SingleComponent = $(new SingleComponent());
     MultipleComponents = $$(new MultipleComponent());
     AsyncComponent = $(new AsyncComponent());
+    Level1Elements = $(new Level1Elements());
 }
 
 module.exports = new App();
