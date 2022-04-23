@@ -30,6 +30,13 @@ class Level1Elements {
     Level2Elements = $$(new Level2Elements());
 }
 
+class NotExistingComponent {
+    selector = 'not-exist';
+
+    Item = $('div');
+    Items = $$('li > span');
+}
+
 class App {
     SingleElement = $('.single-element');
     List = $$('.list li');
@@ -37,6 +44,7 @@ class App {
     MultipleComponents = $$(new MultipleComponent());
     AsyncComponent = $(new AsyncComponent());
     Level1Elements = $(new Level1Elements());
+    NotExistingComponent = $(new NotExistingComponent());
 }
 
 module.exports = new App();

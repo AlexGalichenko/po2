@@ -111,6 +111,26 @@ test('get collection element from collection', async () => {
     expect(elements.length).toBe(3);
 });
 
+test('get child from not existing element', async () => {
+    const shouldThrow = async () => await po.getElement('Not Existing Component > Item');
+    await expect(shouldThrow).rejects.toThrow();
+});
+
+test('get collection from not existing element', async () => {
+    const shouldThrow = async () => await po.getElement('Not Existing Component > Items');
+    await expect(shouldThrow).rejects.toThrow();
+});
+
+test('get collection from not existing element by index', async () => {
+    const shouldThrow = async () => await po.getElement('Not Existing Component > #1 of Items');
+    await expect(shouldThrow).rejects.toThrow();
+});
+
+test('get collection from not existing element by text', async () => {
+    const shouldThrow = async () => await po.getElement('Not Existing Component > #text in Items');
+    await expect(shouldThrow).rejects.toThrow();
+});
+
 afterAll(async () => {
     await po.driver.deleteSession();
 })

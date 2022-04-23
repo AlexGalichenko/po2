@@ -98,7 +98,7 @@ class PO {
         if (token.prefix === '@') {
             condition = (text) => text === token.value;
         }
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             let timer = 0;
             const waitInterval = setInterval(async () => {
                 timer += TICK_INTERVAL;
@@ -106,14 +106,19 @@ class PO {
                     clearInterval(waitInterval);
                     return resolve(this.getChildNotFound(element, token));
                 }
-                const collection = await this.getCollection(element, po.selector);
-                for (const el of collection) {
-                    let text = await el.getText();
-                    if (text === undefined) text = await this.driver.execute(e => e.textContent, el);
-                    if (condition(text)) {
-                        clearInterval(waitInterval);
-                        return resolve(el);
+                try {
+                    const collection = await this.getCollection(element, po.selector);
+                    for (const el of collection) {
+                        let text = await el.getText();
+                        if (text === undefined) text = await this.driver.execute(e => e.textContent, el);
+                        if (condition(text)) {
+                            clearInterval(waitInterval);
+                            return resolve(el);
+                        }
                     }
+                } catch (err) {
+                    clearInterval(waitInterval);
+                    return reject(err);
                 }
             }, TICK_INTERVAL);
         });
@@ -143,7 +148,7 @@ class PO {
      */
     async getElementByIndex(element, po, token) {
         const index = parseInt(token.value) - 1;
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             let timer = 0;
             const waitInterval = setInterval(async () => {
                 timer += TICK_INTERVAL;
@@ -151,10 +156,15 @@ class PO {
                     clearInterval(waitInterval);
                     return resolve(this.getChildNotFound(element, token));
                 }
-                const collection = await this.getCollection(element, po.selector);
-                if (collection.length > index) {
+                try {
+                    const collection = await this.getCollection(element, po.selector);
+                    if (collection.length > index) {
+                        clearInterval(waitInterval);
+                        return resolve(collection[index]);
+                    }
+                } catch (err) {
                     clearInterval(waitInterval);
-                    return resolve(collection[index]);
+                    return reject(err);
                 }
             }, TICK_INTERVAL);
         });
@@ -184,7 +194,7 @@ class PO {
     }
 
     async getChildNotFound(parentElement, {value, suffix, elementName}) {
-        return parentElement.$(`ElementNotExist-${value}-${suffix}-${elementName}`.replace(/\s/g, ''))
+        return parentElement.$(`ElementNotExist-${value}-${suffix}-${elementName}`.replace(/[\W]/g, ''))
     }
 
 }
