@@ -1,10 +1,10 @@
 {
   "name": "@cucumber-e2e/po2",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "library for plain-english access page object access",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest --detectOpenHandles"
   },
   "author": "Alexander Galichenko",
   "license": "MIT",
